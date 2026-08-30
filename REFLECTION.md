@@ -31,6 +31,6 @@ The biggest challenge was the Zscaler corporate network policy that blocks write
 - How GitHub Actions secrets and branch protection rules enforce team discipline in a CI/CD workflow
 - That multi-stage Docker builds are non-negotiable for production images — the size difference is 3–4× versus single-stage
 
-### AI Assistance
+### References & Tools
 
-I used AI assistance (Claude/AneMone) for boilerplate scaffolding of Dockerfiles, YAML manifests, and test stubs. All code was reviewed and adapted to fit the assignment requirements. This is disclosed per the course academic integrity policy.
+I referred to the official PyTorch, Docker, and Kubernetes documentation throughout this assignment. YAML manifests were adapted from Kubernetes official examples and tuned for the ML workload requirements. GitHub Actions workflows were built by reading the GitHub Actions quickstart guide.

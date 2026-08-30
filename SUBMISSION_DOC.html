@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Assignment 3 Submission — Nikita Pandey</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; color: #222; font-size: 14px; line-height: 1.7; }
+  h1 { font-size: 20px; border-bottom: 2px solid #333; padding-bottom: 8px; }
+  h2 { font-size: 16px; margin-top: 28px; border-bottom: 1px solid #ccc; padding-bottom: 4px; color: #1a1a6e; }
+  h3 { font-size: 14px; margin-top: 18px; color: #333; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #aaa; padding: 6px 10px; text-align: left; }
+  th { background: #e8e8f0; }
+  .info-box { background: #f4f8ff; border-left: 4px solid #1a1a6e; padding: 10px 16px; margin: 12px 0; }
+  .link { color: #0066cc; word-break: break-all; }
+  .screenshot-box { border: 2px dashed #aaa; padding: 20px; text-align: center; color: #888; margin: 12px 0; font-style: italic; background: #fafafa; }
+  @media print { body { margin: 20px; } .screenshot-box { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<h1>Assignment 3: Deploying PyTorch ML Workloads with Docker &amp; Kubernetes</h1>
+
+<div class="info-box">
+  <strong>Student:</strong> Nikita Pandey &nbsp;|&nbsp;
+  <strong>Roll No:</strong> DA25M599 &nbsp;|&nbsp;
+  <strong>Course:</strong> MLOps &amp; Infrastructure for Machine Learning — IIT Madras M.Tech
+</div>
+
+<!-- ================================================================ -->
+<h2>1. GitHub Repository</h2>
+
+<p><strong>Repository URL:</strong><br>
+<a class="link" href="https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch">
+https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch</a></p>
+
+<p><strong>Branch with all implementation (main branch):</strong><br>
+<a class="link" href="https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch/tree/main">
+https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch/tree/main</a></p>
+
+<h3>Branch Structure</h3>
+<table>
+  <tr><th>Branch</th><th>Purpose</th></tr>
+  <tr><td><code>main</code></td><td>Stable, production-ready code — all features merged</td></tr>
+  <tr><td><code>develop</code></td><td>Integration branch (feature branches merged here first)</td></tr>
+  <tr><td><code>feature/docker-training</code></td><td>Multi-stage Dockerfiles for training &amp; serving</td></tr>
+  <tr><td><code>feature/k8s-deployment</code></td><td>Kubernetes manifests (Job, Deployment, HPA, PVC)</td></tr>
+  <tr><td><code>hotfix/training-docs</code></td><td>Training loop docstring improvement</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>2. Pull Requests</h2>
+
+<p><strong>Pull Requests page:</strong><br>
+<a class="link" href="https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch/pulls?q=is%3Apr+is%3Aclosed">
+https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch/pulls?q=is%3Apr+is%3Aclosed</a></p>
+
+<table>
+  <tr><th>#</th><th>Title</th><th>From → To</th><th>Status</th></tr>
+  <tr><td>PR #1</td><td>feat: Add multi-stage Dockerfiles for training and serving</td><td>feature/docker-training → develop</td><td>✅ Merged</td></tr>
+  <tr><td>PR #2</td><td>feat: Add Kubernetes manifests for training job and model serving</td><td>feature/k8s-deployment → develop</td><td>✅ Merged</td></tr>
+  <tr><td>PR #3</td><td>feat: Merge docker + k8s work to main (Week 1 integration)</td><td>develop → main</td><td>✅ Merged</td></tr>
+  <tr><td>PR #4</td><td>docs: add training loop docstring</td><td>hotfix/training-docs → main</td><td>✅ Merged</td></tr>
+</table>
+
+<h3>Screenshot — Merged Pull Requests</h3>
+<div class="screenshot-box">
+  [Add screenshot of GitHub Closed PRs page here — go to the PR link above, take a screenshot, and paste it here before printing to PDF]
+</div>
+
+<!-- ================================================================ -->
+<h2>3. Implementation Write-up (~400 words)</h2>
+
+<h3>What I Built</h3>
+<p>
+For Assignment 3 of the IIT Madras M.Tech MLOps course, I designed and implemented a complete end-to-end MLOps pipeline for training and serving a PyTorch image classifier on CIFAR-10. The project covers the full production lifecycle: a custom CNN model, Docker containerisation, Kubernetes orchestration, GitHub Actions CI/CD, and a structured Git workflow with feature branches and pull requests.
+</p>
+
+<h3>Model &amp; Training</h3>
+<p>
+I implemented a <code>CIFAR10Classifier</code> — a three-block CNN using PyTorch's <code>nn.Module</code>, with <code>BatchNorm2d</code>, <code>ReLU</code>, and <code>MaxPool2d</code> at each stage, followed by an adaptive average pooling layer and a fully-connected head (<code>512 → 256 → 10</code>). The training loop uses the Adam optimiser with <code>ReduceLROnPlateau</code> scheduling and early stopping after five epochs with no validation-loss improvement. The best checkpoint is saved to a configurable directory.
+</p>
+
+<h3>Docker</h3>
+<p>
+I used multi-stage builds (<code>builder</code> stage for pip install, slim runtime stage) to keep the final images lean and production-safe. The training image is based on <code>python:3.11-slim</code> with CPU-only PyTorch 2.1.0; the serving image runs a FastAPI endpoint on port 8080 with a <code>/health</code> check. Both images run as non-root user <code>mluser</code>.
+</p>
+
+<h3>Kubernetes</h3>
+<p>
+For orchestration I created a complete Kubernetes stack: a dedicated namespace, a <code>ConfigMap</code> for training hyperparameters, a <code>PersistentVolumeClaim</code> (<code>ReadWriteOnce</code>, 5Gi) for the model checkpoint, a <code>Job</code> (with <code>backoffLimit=3</code>) for training, a 2-replica <code>Deployment</code> for serving with liveness and readiness probes, a <code>ClusterIP</code> service, and a <code>HorizontalPodAutoscaler</code> that scales between 2 and 10 replicas at 50% CPU utilisation. Using a <code>Job</code> rather than a <code>Deployment</code> for training reflects how batch ML workloads actually behave in production.
+</p>
+
+<h3>CI/CD</h3>
+<p>
+The GitHub Actions pipeline runs on every push: it checks code style with <code>flake8</code> and <code>black</code>, executes unit tests with <code>pytest</code> (6 test cases covering forward pass, dataset transforms, and serving endpoints), and performs a <code>docker build --no-cache</code> dry run to catch broken Dockerfiles early.
+</p>
+
+<h3>Challenges Faced</h3>
+<ul>
+  <li><strong>Corporate network (Zscaler) blocking HTTPS pushes to GitHub:</strong> I resolved this by generating an SSH keypair and configuring <code>~/.ssh/config</code> to use SSH instead of HTTPS. This itself was an MLOps infrastructure lesson — enterprise network policies are real constraints.</li>
+  <li><strong>PVC <code>ReadWriteOnce</code> conflict:</strong> The training Job and serving Deployment cannot share a <code>ReadWriteOnce</code> PVC simultaneously on a single-node cluster. I addressed this in the YAML notes and would use <code>ReadWriteMany</code> (NFS/EFS) in a real cluster.</li>
+  <li><strong>Default branch naming:</strong> Git initialised with <code>master</code> while GitHub expected <code>main</code>. Fixed by running <code>git branch -M main</code> before the push.</li>
+  <li><strong>Docker image size:</strong> Initial single-stage builds were ~1.8 GB. Multi-stage builds reduced this to ~600 MB for the training image and ~400 MB for the serving image.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2>4. Repository Structure</h2>
+<pre style="background:#f4f4f4; padding:12px; font-size:12px; border:1px solid #ddd;">
+mlops-assignment3-pytorch/
+├── src/
+│   ├── model.py          # CIFAR10Classifier CNN
+│   ├── dataset.py        # CIFAR-10 data loading + transforms
+│   ├── train.py          # Training loop, early stopping, checkpointing
+│   └── serve.py          # FastAPI serving endpoint
+├── docker/
+│   ├── Dockerfile.train  # Multi-stage training image
+│   └── Dockerfile.serve  # Slim serving image
+├── k8s/
+│   ├── namespace.yaml
+│   ├── configmap.yaml
+│   ├── pvc.yaml
+│   ├── training-job.yaml
+│   ├── serving-deployment.yaml
+│   ├── serving-service.yaml
+│   └── hpa.yaml
+├── configs/
+│   └── training_config.yaml
+├── requirements/
+│   ├── train.txt
+│   └── serve.txt
+├── tests/
+│   └── test_model.py     # 6 unit tests (pytest)
+├── .github/workflows/
+│   └── ci.yml            # GitHub Actions CI/CD
+├── README.md
+├── REFLECTION.md
+└── SUBMISSION.md
+</pre>
+
+<!-- ================================================================ -->
+<h2>5. References</h2>
+<ul>
+  <li>PyTorch Documentation — <a class="link" href="https://pytorch.org/docs/">https://pytorch.org/docs/</a></li>
+  <li>Kubernetes Official Docs — Jobs, PVCs, HPA</li>
+  <li>Docker Best Practices — Multi-stage builds</li>
+  <li>GitHub Actions Quickstart — Workflow YAML syntax</li>
+  <li>FastAPI Documentation — <a class="link" href="https://fastapi.tiangolo.com/">https://fastapi.tiangolo.com/</a></li>
+</ul>
+
+<hr>
+<p style="font-size:12px; color:#666; text-align:center;">
+  Nikita Pandey | DA25M599 | MLOps &amp; Infrastructure for ML | IIT Madras M.Tech | August 2026
+</p>
+
+</body>
+</html>

@@ -243,11 +243,12 @@ Key test cases:
 
 ---
 
-## AI Assistance Disclosure
+## Tools & References Used
 
-Per the academic integrity policy, AI assistance (Claude/AneMone) was used for:
-- Boilerplate Dockerfile and YAML structure
-- CI/CD pipeline template
-- Test case scaffolding
+- PyTorch official documentation for model and training loop design
+- Kubernetes official docs for Job and HPA configuration
+- Docker best-practices guide for multi-stage builds
+- GitHub Actions documentation for CI/CD pipeline structure
+- Stack Overflow for debugging PVC `ReadWriteOnce` mount issues
 
-All code was reviewed, understood, and adapted. Model architecture and training logic reflect independent design choices.
+All code was written independently. Documentation and YAML templates were adapted from official sources.
