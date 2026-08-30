@@ -1,0 +1,29 @@
+# ── PersistentVolumeClaim for CIFAR-10 data ───────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cifar10-data-pvc
+  namespace: ml-training
+  labels:
+    app: mlops-pytorch-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+# ── PersistentVolumeClaim for model checkpoints ──────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-checkpoints-pvc
+  namespace: ml-training
+  labels:
+    app: mlops-pytorch-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-serving
+  namespace: ml-training
+  labels:
+    app: mlops-pytorch-pipeline
+    component: serving
+spec:
+  # Use LoadBalancer for cloud clusters; ClusterIP + port-forward for local.
+  type: ClusterIP
+  selector:
+    app: mlops-pytorch-pipeline
+    component: serving
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080

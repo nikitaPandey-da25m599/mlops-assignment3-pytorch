@@ -1,0 +1,9 @@
+# ── PyTorch (CPU wheel — swap for +cu118 on GPU nodes) ───────────────────────
+torch==2.3.1
+torchvision==0.18.1
+
+# ── Config & utilities ───────────────────────────────────────────────────────
+PyYAML==6.0.1
+
+# ── Progress / logging ───────────────────────────────────────────────────────
+tqdm==4.66.4

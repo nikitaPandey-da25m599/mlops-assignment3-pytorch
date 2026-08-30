@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-serving
+  namespace: ml-training
+  labels:
+    app: mlops-pytorch-pipeline
+    component: serving
+spec:
+  replicas: 2
+
+  # ── Rolling update strategy ────────────────────────────────────────────────
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  selector:
+    matchLabels:
+      app: mlops-pytorch-pipeline
+      component: serving
+
+  template:
+    metadata:
+      labels:
+        app: mlops-pytorch-pipeline
+        component: serving
+    spec:
+      # ── Volumes ─────────────────────────────────────────────────────────────
+      volumes:
+        - name: checkpoint-volume
+          persistentVolumeClaim:
+            claimName: model-checkpoints-pvc
+        - name: config-volume
+          configMap:
+            name: training-config
+
+      containers:
+        - name: model-server
+          image: mlops-serve:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          # ── Volume mounts ─────────────────────────────────────────────────
+          volumeMounts:
+            - name: checkpoint-volume
+              mountPath: /app/checkpoints
+              readOnly: true
+            - name: config-volume
+              mountPath: /app/configs
+              readOnly: true
+
+          # ── Environment ───────────────────────────────────────────────────
+          env:
+            - name: MODEL_PATH
+              value: /app/checkpoints/classifier_v1.pt
+            - name: CONFIG_PATH
+              value: /app/configs/training_config.yaml
+            - name: PORT
+              value: "8080"
+
+          # ── Resources ────────────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+
+          # ── Probes ───────────────────────────────────────────────────────
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1

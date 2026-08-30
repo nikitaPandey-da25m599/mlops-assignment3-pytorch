@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1: base — install pinned dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+# Install system deps needed by torchvision (libGL, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/train.txt ./requirements/train.txt
+
+RUN pip install --no-cache-dir -r requirements/train.txt
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2: training runtime
+# ─────────────────────────────────────────────────────────────────────────────
+FROM base AS training
+
+# Copy source and default config
+COPY src/       ./src/
+COPY configs/   ./configs/
+
+# The config file can be overridden at runtime by mounting a volume at
+# /app/configs or by setting CONFIG_PATH env var.
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    CONFIG_PATH=/app/configs/training_config.yaml
+
+# Directories for data and checkpoints (populated via PVC mounts in k8s or
+# -v mounts with docker run).
+RUN mkdir -p /app/data /app/checkpoints
+
+ENTRYPOINT ["python", "src/train.py"]

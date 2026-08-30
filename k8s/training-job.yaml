@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pytorch-training-job
+  namespace: ml-training
+  labels:
+    app: mlops-pytorch-pipeline
+    component: training
+spec:
+  # Do not restart on failure — surface errors immediately.
+  backoffLimit: 2
+  # Remove completed/failed Job pods after 1 hour for cluster hygiene.
+  ttlSecondsAfterFinished: 3600
+
+  template:
+    metadata:
+      labels:
+        app: mlops-pytorch-pipeline
+        component: training
+    spec:
+      restartPolicy: Never
+
+      # ── Volumes ──────────────────────────────────────────────────────────
+      volumes:
+        - name: config-volume
+          configMap:
+            name: training-config
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: cifar10-data-pvc
+        - name: checkpoint-volume
+          persistentVolumeClaim:
+            claimName: model-checkpoints-pvc
+
+      containers:
+        - name: pytorch-trainer
+          image: mlops-train:v1
+          imagePullPolicy: IfNotPresent
+
+          # ── Volume mounts ───────────────────────────────────────────────
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/configs
+              readOnly: true
+            - name: data-volume
+              mountPath: /app/data
+            - name: checkpoint-volume
+              mountPath: /app/checkpoints
+
+          # ── Environment ─────────────────────────────────────────────────
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: CONFIG_PATH
+              value: /app/configs/training_config.yaml
+
+          # ── Resources ───────────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+              # ── BONUS: GPU support (uncomment for GPU nodes) ─────────────
+              # nvidia.com/gpu: "1"
+
+          # ── Bonus: toleration for GPU nodes ────────────────────────────
+          # tolerations:
+          #   - key: "nvidia.com/gpu"
+          #     operator: "Exists"
+          #     effect: "NoSchedule"
+          # nodeSelector:
+          #   accelerator: nvidia-tesla-t4

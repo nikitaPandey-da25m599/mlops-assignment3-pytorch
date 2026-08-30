@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Serving image — minimal, non-root, with HEALTHCHECK
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS serving
+
+WORKDIR /app
+
+# System libs required by Pillow / torchvision (no training tools installed)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Only inference dependencies (no tensorboard, no tqdm, etc.)
+COPY requirements/serve.txt ./requirements/serve.txt
+RUN pip install --no-cache-dir -r requirements/serve.txt
+
+# Copy application source and default config
+COPY src/       ./src/
+COPY configs/   ./configs/
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    MODEL_PATH=/app/checkpoints/classifier_v1.pt \
+    CONFIG_PATH=/app/configs/training_config.yaml \
+    PORT=8080
+
+# Create a non-root user and hand ownership over
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser \
+    && mkdir -p /app/checkpoints \
+    && chown -R appuser:appgroup /app
+
+USER appuser
+
+EXPOSE 8080
+
+# Docker native health check (complements Kubernetes probes)
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "8080"]
