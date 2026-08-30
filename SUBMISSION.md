@@ -229,7 +229,7 @@ Key test cases:
 
 ## GitHub Repository
 
-**URL:** https://github.com/nikitaPandey-da25m599/mlops-pytorch-pipeline
+**URL:** https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch
 
 **Branches:** main, develop, feature/docker-training, feature/k8s-deployment, hotfix/training-docs
 
