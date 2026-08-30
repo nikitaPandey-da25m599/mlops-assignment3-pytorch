@@ -4,6 +4,14 @@
 
 ---
 
+## 🔗 GitHub Repository
+
+**URL:** https://github.com/nikitaPandey-da25m599/mlops-assignment3-pytorch
+
+**Branches:** main, develop, feature/docker-training, feature/k8s-deployment, hotfix/training-docs
+
+---
+
 ## Part 1: PyTorch Model Training Pipeline
 
 ### Q1.1 — Model Architecture
